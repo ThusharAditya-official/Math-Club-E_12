@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>PROMPT WARS</title>
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to right,#2F4F9E);
+    margin:0;
+    padding:0;
+}
+h2{
+    color: #1E2A47;
+
+}
+.navbar{
+    background:#f1f2f2;
+    color:#1E2A47;
+    padding:15px;
+    text-align:center;
+    letter-spacing: 1px;
+    font-size: 30px;
+    position:relative;
+}
+.navbar img{
+    position:absolute;
+    top:5px;
+    height:50px;
+    width:auto;
+}
+.navbar img.left{ left:15px; }
+.navbar img.right{ right:15px; }
+.container{
+    width:1000px;
+    background:#FFFFFF;
+    padding:40px;
+    border-radius:12px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.15);
+    margin:40px auto;
+}
+.timer{ font-weight:bold; color:#dc2626; float:right; }
+input, textarea{
+    width:100%; padding:10px; margin:8px 0;
+    border:1px solid #ccc; border-radius:6px;
+}
+textarea::placeholder{ color:#888; font-style:italic; }
+button{
+    padding:8px 14px; background:#1D4ED8; color:white;
+    border:none; border-radius:6px; cursor:pointer;
+}
+button:hover{ background:#1E40AF; }
+.nav-buttons{ display:flex; justify-content:space-between; }
+.hidden{ display:none; }
+table{ width:100%; border-collapse:collapse; margin-top:15px; }
+th,td{ border:1px solid #ddd; padding:6px; text-align:center; }
+#questionText{ white-space: pre-line; }
+</style>
+</head>
+
+<body>
+<div class="navbar">
+    <img src="leftlogo.png" class="left" alt="Left Logo">
+    GMRIT Math Club
+    <img src="mathii.jpeg" class="right" alt="Right Logo">
+</div>
+
+<div class="container">
+<h2>PROMPT WARS</h2>
+<div class="timer hidden" id="timer">40:00</div>
+
+<div id="startSection">
+<input type="text" id="name" placeholder="NAME">
+<input type="text" id="jntu" placeholder="JNTU NO.">
+<input type="text" id="branch" placeholder="BRANCH">
+<button onclick="startTest()">Start Test</button>
+</div>
+
+<div id="testSection" class="hidden">
+<h3 id="questionText"></h3>
+<textarea id="answerBox" rows="4" placeholder="Enter your answer here"></textarea>
+<div class="nav-buttons">
+<button id="prevBtn" onclick="prevQuestion()">Previous</button>
+<button id="nextBtn" onclick="nextQuestion()">Next</button>
+</div>
+</div>
+
+<div id="feedbackSection" class="hidden">
+<h3>Feedback (Required)</h3>
+<textarea id="feedback" rows="3" placeholder="Enter your feedback"></textarea>
+<button onclick="finalSubmit()">Submit Feedback & Finish</button>
+</div>
+
+<div id="resultSection" class="hidden"></div>
+
+<div id="leaderboardSection" class="hidden">
+<h3>Leaderboard</h3>
+<table id="leaderboardTable"></table>
+<div id="scoreboardImage">
+    <img src="/static/scoreboard.png" alt="Scoreboard Image" style="margin-top:20px; max-width:100%; border-radius:12px;">
+</div>
+</div>
+</div>
+
+<script>
+let questions = [
+`One card is drawn from a deck.\nFind probability of drawing a king.\nAnswer:- 1/23\nFind the constraint?`,
+`(dy/dx) +y=0\nFind y.\nAnswer:- 5e power -x\nFind the constraint?`,
+`A circle touches the x-axis and passes through the point (2,3).\nFind its radius.\nAnswer:- 3/2\nFind the constraint?`,
+`Find factors of 21.\nAnswers:- 3,7\nFind the constraint?`,
+`Principal = ₹1000\nRate = 10% per year\nTime = 2 years\nFind simple interest.\nAnswer:- 200\nFind the constraint?`,
+`Find slope of line passing through (2,3) and (4,7).\nAnswer :- 2\nFind the constraint?`,
+`Two sides of a triangular flight path measure 6 km and 9 km.\nThe area covered is 12 km².\nFind the third side.\nAnswer:- 13.2 (approx)\nFind the constraint?`,
+`How many ways can 3 books be arranged?\nAnswer :- 3\nFind the constraint?`,
+`In a class of 40 students:\n20 play cricket.25 play football.\n10 play both.\nFind number who play at least one sport.\nAnswer:- 40\nFind the constraint?`,
+`Two dice are rolled.\nFind the probability that the sum is 8.\nAnswer:- 2/15\nFind the constraint?`,
+`A cylindrical water tank has radius 7 m and height 10 m.\nFind its total surface area.\nAnswer:- 748 meter square\nFind the constraint?`,
+`The present age of a father is twice that of his son.In 5 years, their total age will be 50.\nFind their present ages.\nAnswer:- Son = 13⅓ years Father = 26⅔ years\nFind the constraint?`,
+`A box has 3 red and 2 blue balls.\nTwo balls are drawn without replacement.Find probability both are red.\nAnswer:- 1/2\nFind the constraint?`,
+`In a certain code:\nCAR = 312\nBAR = 512\nFind code for ARC.\nAnswer :- 312\nFind the constraint?`,
+`Four people A, B, C, D sit in a row.\nA is not at either end.\nC sits immediately left of D.\nFind the possible arrangement.\nAnswer:- B A C D\nFind the constraint?`
+];
+
+let answers=new Array(15).fill("");
+let current=0;
+let totalSeconds=40*60;
+let timerInterval;
+
+function startTest(){
+    let name=document.getElementById("name").value.trim();
+    let jntu=document.getElementById("jntu").value.trim();
+    let branch=document.getElementById("branch").value.trim();
+    
+    if(name===""||jntu===""||branch===""){ 
+        alert("All fields compulsory"); 
+        return; 
+    }
+    startSection.classList.add("hidden");
+    testSection.classList.remove("hidden");
+    timer.classList.remove("hidden");
+    startTimer();
+    loadQuestion();
+}
+
+function startTimer(){
+    timerInterval=setInterval(()=>{
+        totalSeconds--;
+        let m=Math.floor(totalSeconds/60);
+        let s=totalSeconds%60;
+        timer.innerText=(m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+        if(totalSeconds<=0){ clearInterval(timerInterval); autoSubmit(); }
+    },1000);
+}
+
+function loadQuestion(){
+    questionText.innerText="Question "+(current+1)+" :\n\n"+questions[current];
+    answerBox.value=answers[current];
+    prevBtn.style.display=current===0?"none":"inline-block";
+    nextBtn.innerText=current===14?"Submit":"Next";
+}
+
+function nextQuestion(){
+    answers[current]=answerBox.value;
+    if(current===14){
+        testSection.classList.add("hidden");
+        feedbackSection.classList.remove("hidden");
+    }else{
+        current++;
+        loadQuestion();
+    }
+}
+
+function prevQuestion(){
+    answers[current]=answerBox.value;
+    current--;
+    loadQuestion();
+}
+
+function autoSubmit(){
+    testSection.classList.add("hidden");
+    feedbackSection.classList.remove("hidden");
+}
+
+async function finalSubmit(){
+    if(feedback.value.trim()===""){
+        alert("Feedback Required");
+        return;
+    }
+    clearInterval(timerInterval);
+
+    let payload = {
+        name: document.getElementById("name").value.trim(),
+        jntu: document.getElementById("jntu").value.trim(),
+        branch: document.getElementById("branch").value.trim(),
+        answers: answers,
+        feedback: feedback.value.trim()
+    }; 
+
+    try {
+        let response = await fetch("/get_score", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify(payload)
+        });
+        let result = await response.json();
+
+        if(response.ok){
+            feedbackSection.classList.add("hidden");
+            resultSection.classList.remove("hidden");
+            resultSection.innerHTML=`<h3>Your Score: ${result.score} / 15</h3>`;
+
+            leaderboardSection.classList.remove("hidden");
+            let table=`<tr><th>Name</th><th>JNTU</th><th>Branch</th><th>Score</th></tr>`;
+            result.leaderboard.forEach(p=>{
+                table+=`<tr>
+                <td>${p.name}</td>
+                <td>${p.jntu}</td>
+                <td>${p.branch}</td>
+                <td>${p.score}</td>
+                </tr>`;
+            });
+            leaderboardTable.innerHTML=table;
+        } else {
+            alert(result.error);
+        }
+    } catch(err){
+        alert("Error submitting results. Please try again.");
+    }
+}
+</script>
+</body>
+</html>
+

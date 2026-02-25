@@ -1,36 +1,27 @@
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import os
-import mysql.connector
+import psycopg2
 
 app = Flask(__name__)
-CORS(app)  # Required when frontend & backend are on different domains
+CORS(app)
 
 
-# ---------------------------
-# Database Connection Function
-# ---------------------------
 def get_db_connection():
-    return mysql.connector.connect(
+    return psycopg2.connect(
         host=os.environ.get("DB_HOST"),
+        database=os.environ.get("DB_NAME"),
         user=os.environ.get("DB_USER"),
         password=os.environ.get("DB_PASSWORD"),
-        database=os.environ.get("DB_NAME"),
-        port=int(os.environ.get("DB_PORT", 3306))
+        port=os.environ.get("DB_PORT")
     )
 
 
-# ---------------------------
-# Home Route
-# ---------------------------
 @app.route('/')
 def home():
     return render_template("hansik.html")
 
 
-# ---------------------------
-# Submit Test + Store Answers + Leaderboard
-# ---------------------------
 @app.route('/get_score', methods=['POST'])
 def get_score():
     data = request.json
@@ -46,33 +37,32 @@ def get_score():
     cursor = db.cursor()
 
     # Check if participant exists
-    cursor.execute("SELECT id FROM participants WHERE jntu=%s", (jntu,))
+    cursor.execute("SELECT id FROM participants WHERE jntu=%s;", (jntu,))
     existing = cursor.fetchone()
 
     if existing:
         participant_id = existing[0]
 
         cursor.execute(
-            "UPDATE participants SET name=%s, branch=%s, score=%s WHERE id=%s",
+            "UPDATE participants SET name=%s, branch=%s, score=%s WHERE id=%s;",
             (name, branch, score, participant_id)
         )
 
         cursor.execute(
-            "DELETE FROM answers WHERE participant_id=%s",
+            "DELETE FROM answers WHERE participant_id=%s;",
             (participant_id,)
         )
 
     else:
         cursor.execute(
-            "INSERT INTO participants (name, jntu, branch, score) VALUES (%s, %s, %s, %s)",
+            "INSERT INTO participants (name, jntu, branch, score) VALUES (%s, %s, %s, %s) RETURNING id;",
             (name, jntu, branch, score)
         )
-        participant_id = cursor.lastrowid
+        participant_id = cursor.fetchone()[0]
 
-    # Insert answers
     for i, ans in enumerate(answers):
         cursor.execute(
-            "INSERT INTO answers (participant_id, question_number, answer_text) VALUES (%s, %s, %s)",
+            "INSERT INTO answers (participant_id, question_number, answer_text) VALUES (%s, %s, %s);",
             (participant_id, i + 1, ans)
         )
 
@@ -80,14 +70,23 @@ def get_score():
     cursor.close()
     db.close()
 
-    # Fetch leaderboard
     db = get_db_connection()
-    cursor = db.cursor(dictionary=True)
+    cursor = db.cursor()
 
     cursor.execute(
-        "SELECT name, jntu, branch, score FROM participants ORDER BY score DESC"
+        "SELECT name, jntu, branch, score FROM participants ORDER BY score DESC;"
     )
-    leaderboard = cursor.fetchall()
+
+    rows = cursor.fetchall()
+
+    leaderboard = []
+    for row in rows:
+        leaderboard.append({
+            "name": row[0],
+            "jntu": row[1],
+            "branch": row[2],
+            "score": row[3]
+        })
 
     cursor.close()
     db.close()
@@ -98,8 +97,5 @@ def get_score():
     })
 
 
-# ---------------------------
-# Local Development Run
-# ---------------------------
 if __name__ == '__main__':
     app.run(debug=True)

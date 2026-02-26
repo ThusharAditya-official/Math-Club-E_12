@@ -59,9 +59,9 @@ th,td{ border:1px solid #ddd; padding:6px; text-align:center; }
 
 <body>
 <div class="navbar">
-    <img src="leftlogo.png" class="left" alt="Left Logo">
+    <img src="{{ url_for('static', filename='leftlogo.png') }}" class="left" alt="Left Logo">
     GMRIT Math Club
-    <img src="mathii.jpeg" class="right" alt="Right Logo">
+    <img src="{{ url_for('static', filename='mathii.jpeg') }}" class="right" alt="Right Logo">
 </div>
 
 <div class="container">
@@ -96,7 +96,7 @@ th,td{ border:1px solid #ddd; padding:6px; text-align:center; }
 <h3>Leaderboard</h3>
 <table id="leaderboardTable"></table>
 <div id="scoreboardImage">
-    <img src="/static/scoreboard.png" alt="Scoreboard Image" style="margin-top:20px; max-width:100%; border-radius:12px;">
+    <img src="{{ url_for('static', filename='insta.jpeg') }}" alt="Scoreboard Image" style="margin-top:20px; max-width:100%; border-radius:12px;">
 </div>
 </div>
 </div>
